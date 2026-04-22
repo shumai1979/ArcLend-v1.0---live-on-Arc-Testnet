@@ -688,26 +688,26 @@ footer{
     <div class="fc">
       <div class="fct">USDC — Gas + Collateral</div>
       <div class="fcd">USDC is Arc's native gas token. You need it to pay for all transactions and as lending collateral. Request up to 20 USDC every 2 hours.</div>
-      <button class="fb" onclick="open('https://faucet.circle.com','_blank')">Circle Faucet (Official) →</button>
+      <button class="fb" onclick="window.open('https://faucet.circle.com','_blank')">Circle Faucet (Official) →</button>
       <div class="fa">ERC-20: 0x3600000000000000000000000000000000000000 · 6 decimals</div>
     </div>
     <div class="fc">
       <div class="fct">EURC — Euro Stablecoin</div>
       <div class="fcd">Euro-denominated stablecoin by Circle. Select EURC on the Circle faucet after connecting your wallet.</div>
-      <button class="fb" onclick="open('https://faucet.circle.com','_blank')">Circle Faucet → select EURC</button>
+      <button class="fb" onclick="window.open('https://faucet.circle.com','_blank')">Circle Faucet → select EURC</button>
       <div class="fa">Contract: 0x89B50855Aa3bE2F677cD6303Cec089B5F319D72a · 6 decimals</div>
     </div>
     <div class="fc">
       <div class="fct">Add Arc Testnet to Wallet</div>
       <div class="fcd">Add Arc Testnet to MetaMask or Rabby automatically in one click.</div>
       <button class="fb" onclick="addArcNet()">Add Arc Testnet Automatically</button>
-      <button class="fb sec" onclick="open('https://testnet.arcscan.app','_blank')">Arc Block Explorer →</button>
+      <button class="fb sec" onclick="window.open('https://testnet.arcscan.app','_blank')">Arc Block Explorer →</button>
       <div class="fa">Chain ID: 5042002 · RPC: arc-testnet.drpc.org · Gas: USDC</div>
     </div>
     <div class="fc">
       <div class="fct">ArcLend Contract</div>
       <div class="fcd">ArcLend is live on Arc Testnet. Supply USDC/EURC as collateral, then borrow up to 80% LTV.</div>
-      <button class="fb" onclick="open('https://testnet.arcscan.app/address/0x3A2Aa26B62cD5d5E71f1466B4c3b847532d2b3F2','_blank')">View Contract on Explorer →</button>
+      <button class="fb" onclick="window.open('https://testnet.arcscan.app/address/0x3A2Aa26B62cD5d5E71f1466B4c3b847532d2b3F2','_blank')">View Contract on Explorer →</button>
       <div class="fa">0x3A2Aa26B62cD5d5E71f1466B4c3b847532d2b3F2</div>
     </div>
     <div class="fc" style="grid-column:1/-1">
@@ -877,18 +877,31 @@ async function connectWallet(){
 }
 
 async function addArcNet(){
+  if(!window.ethereum){
+    toast("MetaMask or Rabby not detected — please install a wallet first.","err");
+    return;
+  }
   try{
     await window.ethereum.request({method:"wallet_switchEthereumChain",
       params:[{chainId:"0x"+CHAIN_ID.toString(16)}]});
+    toast("✓ Switched to Arc Testnet!","ok");
   }catch(e){
-    if(e.code===4902)
-      await window.ethereum.request({method:"wallet_addEthereumChain",params:[{
-        chainId:"0x"+CHAIN_ID.toString(16),
-        chainName:"Arc Testnet",
-        nativeCurrency:{name:"USD Coin",symbol:"USDC",decimals:6},
-        rpcUrls:["https://arc-testnet.drpc.org","https://rpc.testnet.arc.network"],
-        blockExplorerUrls:[EXPLORER]
-      }]});
+    if(e.code===4902){
+      try{
+        await window.ethereum.request({method:"wallet_addEthereumChain",params:[{
+          chainId:"0x"+CHAIN_ID.toString(16),
+          chainName:"Arc Testnet",
+          nativeCurrency:{name:"USD Coin",symbol:"USDC",decimals:6},
+          rpcUrls:["https://arc-testnet.drpc.org","https://rpc.testnet.arc.network"],
+          blockExplorerUrls:[EXPLORER]
+        }]});
+        toast("✓ Arc Testnet added to your wallet!","ok");
+      }catch(e2){
+        if(e2.code!==4001) toast("Error adding network: "+e2.message,"err");
+      }
+    }else if(e.code!==4001){
+      toast("Error: "+e.message,"err");
+    }
   }
 }
 
